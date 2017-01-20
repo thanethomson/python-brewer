@@ -1,0 +1,6 @@
+pip>=9.0.1
+pipdeptree>=0.9.0
+requests
+html5lib
+future
+six
