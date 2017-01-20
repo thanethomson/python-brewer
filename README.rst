@@ -14,6 +14,8 @@ process.
 Primarily, it takes an installed package, finds all of its installed
 dependencies, and generates a template containing ``resource``
 references to all of these dependencies (as per the installed versions).
+It also automatically computes the SHA256 hashes of all of the packages
+by downloading their source distributions from PyPI.
 
 See Homebrew's `Python for Formula
 Authors <https://github.com/Homebrew/brew/blob/master/docs/Python-for-Formula-Authors.md>`__
@@ -178,8 +180,8 @@ and
 `statik.rb <https://github.com/Homebrew/homebrew-core/blob/master/Formula/statik.rb>`__
 in ``homebrew-core`` for more details.
 
-Python 2 or 3
--------------
+Python 2 or 3?
+--------------
 
 While ``python-brewer`` runs well on Python 2.7+ and Python 3.5+, it's
 important to note that sometimes your dependencies will be different
