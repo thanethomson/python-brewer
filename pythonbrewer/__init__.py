@@ -5,4 +5,4 @@ from pythonbrewer.deplist import *
 from pythonbrewer.pypi import *
 from pythonbrewer.brew import *
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
