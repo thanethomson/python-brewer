@@ -66,7 +66,7 @@ def build_dep_list(package_name, local_only=True):
         raise MultiplePackagesFoundError(package_name)
 
     key_tree = dict((k.key, v) for k, v in iteritems(tree))
-    deps = recursive_extract_dep_list(key_tree, 'statik')
+    deps = recursive_extract_dep_list(key_tree, package_name)
 
     unique_deps = []
     seen_deps = set()
