@@ -53,6 +53,12 @@ def main():
              "be a release in your project's GitHub repo)"
     )
     parser.add_argument(
+        "-s", "--suffixes",
+        default="py2.py3-none-any.whl,.tar.gz,.zip",
+        help="A string containing a comma-separated list (no whitespace) of the desired suffixes for dependency "
+             "files in order of precedence (default: \"py2.py3-none-any.whl,.tar.gz,.zip\")"
+    )
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Display verbose logging information"
@@ -72,7 +78,8 @@ def main():
     output_file = os.path.abspath(args.output_file)
     with open(output_file, "wt", encoding="utf-8") as f:
         template = generate_homebrew_formula(args.package_name, formula_name, args.description,
-                                             args.homepage, args.git_repo, release_url=args.release_url)
+                                             args.homepage, args.git_repo, release_url=args.release_url,
+                                             required_suffixes=args.suffixes.split(","))
         f.write(template)
 
     logger.info("Wrote template to %s" % output_file)

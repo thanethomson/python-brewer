@@ -29,14 +29,15 @@ def html_findall(tree, namespace, xpath):
     return tree.findall(xpath.format(ns="{%s}" % namespace))
 
 
-def fetch_pypi_package_files(package_name, package_version, required_suffix=None):
+def fetch_pypi_package_files(package_name, package_version, required_suffixes=None):
     """Attempts to fetch a list of files for the given package/version from PyPI.
 
     Args:
         package_name: The name of the package for which to fetch files.
         package_version: The version of the package for which to fetch files.
-        required_suffix: The required suffix for the package files we want. Set to None if you want all files for
-            the particular version.
+        required_suffixes: The required suffixes for the package files we want. Leave as None if you want all files for
+            the particular version. If supplied, it must be a list and must specify, in order of precedence,
+            the suffixes.
 
     Returns:
         A list of URLs to different distributions for the specified package.
@@ -55,17 +56,27 @@ def fetch_pypi_package_files(package_name, package_version, required_suffix=None
     namespace = get_html_namespace(tree)
     links = html_findall(tree, namespace, "./{ns}body/{ns}a")
 
+    urls_for_suffix = dict([(suffix, []) for suffix in required_suffixes])
     urls = []
     for link in links:
         filename = re.sub(r"\.[0]+(\d+)", r".\1", link.text.strip().lower())
         url = "https://pypi.python.org/%s" % link.attrib["href"].replace("../../", "")
 
         if filename.startswith(expected_prefix) or filename.startswith(expected_prefix_underscore):
-            if required_suffix is not None:
-                if filename.endswith(required_suffix):
-                    urls.append(url)
+            if required_suffixes is not None:
+                for suffix in required_suffixes:
+                    if filename.endswith(suffix):
+                        urls_for_suffix[suffix].append(url)
             else:
                 urls.append(url)
+
+    # gives us a list of urls sorted by suffix
+    if required_suffixes is not None:
+        for suffix in required_suffixes:
+            urls.extend(urls_for_suffix[suffix])
+
+    for url in urls:
+        logger.debug("Found possible URL: %s" % url)
 
     return urls
 
