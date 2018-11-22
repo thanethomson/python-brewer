@@ -60,7 +60,7 @@ def fetch_pypi_package_files(package_name, package_version, required_suffixes=No
     urls = []
     for link in links:
         filename = re.sub(r"\.[0]+(\d+)", r".\1", link.text.strip().lower())
-        url = "https://pypi.python.org/%s" % link.attrib["href"].replace("../../", "")
+        url = link.attrib["href"]
 
         if filename.startswith(expected_prefix) or filename.startswith(expected_prefix_underscore):
             if required_suffixes is not None:
@@ -92,14 +92,16 @@ def get_pypi_sha256(url):
         raise PackageFetchError(url)
 
     if hash_index_md5 > -1:
+        hash_index_sha256 += len("#md5=")
         md5 = hashlib.md5(response.content).hexdigest().lower()
         if md5 != url[hash_index_md5]:
             raise HashValidationFailedError(url, url[hash_index_md5], md5)
 
     if hash_index_sha256 > -1:
+        hash_index_sha256 += len("#sha256=")
         sha256 = hashlib.sha256(response.content).hexdigest().lower()
-        if sha256 != url[hash_index_sha256]:
-            raise HashValidationFailedError(url, url[hash_index_sha256], sha256)
-        return url[hash_index_sha256]
+        if sha256 != url[hash_index_sha256:]:
+            raise HashValidationFailedError(url, url[hash_index_sha256:], sha256)
+        return url[hash_index_sha256:]
 
     return hashlib.sha256(response.content).hexdigest()
