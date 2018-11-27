@@ -60,7 +60,7 @@ def fetch_pypi_package_files(package_name, package_version, required_suffixes=No
     urls = []
     for link in links:
         filename = re.sub(r"\.[0]+(\d+)", r".\1", link.text.strip().lower())
-        url = "https://pypi.python.org/%s" % link.attrib["href"].replace("../../", "")
+        url = link.attrib["href"]
 
         if filename.startswith(expected_prefix) or filename.startswith(expected_prefix_underscore):
             if required_suffixes is not None:
@@ -82,17 +82,26 @@ def fetch_pypi_package_files(package_name, package_version, required_suffixes=No
 
 
 def get_pypi_sha256(url):
-    """Downloads the given file from the specified URL, optionally validating the MD5 hash (if one is supplied in
-    the URL itself). Returns the SHA-256 hash of the given file."""
-    url_parts = url.split("#md5=")
+    """Downloads the given file from the specified URL, optionally validating the MD5/SHA256 hash (if one is supplied
+    in the URL itself). Returns the SHA-256 hash of the given file."""
+    hash_index_md5 = url.find("#md5=")
+    hash_index_sha256 = url.find("#sha256=")
 
-    response = requests.get(url_parts[0])
+    response = requests.get(url)
     if response.status_code >= 300:
         raise PackageFetchError(url)
 
-    if len(url_parts) > 1:
+    if hash_index_md5 > -1:
+        hash_index_sha256 += len("#md5=")
         md5 = hashlib.md5(response.content).hexdigest().lower()
-        if md5 != url_parts[1]:
-            raise HashValidationFailedError(url, url_parts[1], md5)
+        if md5 != url[hash_index_md5]:
+            raise HashValidationFailedError(url, url[hash_index_md5], md5)
+
+    if hash_index_sha256 > -1:
+        hash_index_sha256 += len("#sha256=")
+        sha256 = hashlib.sha256(response.content).hexdigest().lower()
+        if sha256 != url[hash_index_sha256:]:
+            raise HashValidationFailedError(url, url[hash_index_sha256:], sha256)
+        return url[hash_index_sha256:]
 
     return hashlib.sha256(response.content).hexdigest()

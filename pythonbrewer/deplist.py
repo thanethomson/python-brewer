@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 from future.utils import iteritems
 
-import pip
 from pipdeptree import build_dist_index, construct_tree, sorted_tree
 
 from pythonbrewer.errors import *
@@ -54,7 +53,14 @@ def build_dep_list(package_name, local_only=True):
     Returns:
         A Python list containing information about the dependencies for that package.
     """
-    packages = pip.get_installed_distributions(local_only=local_only)
+    ## Dealing with pip 10.* api chagnes
+    ## The solution is from:
+    ## https://github.com/naiquevin/pipdeptree/blob/master/pipdeptree.py
+    try:
+        from pip._internal.utils.misc import get_installed_distributions
+    except ImportError:
+        from pip import get_installed_distributions
+    packages = get_installed_distributions(local_only=local_only)
     dist_index = build_dist_index(packages)
     tree = sorted_tree(construct_tree(dist_index))
     nodes = tree.keys()

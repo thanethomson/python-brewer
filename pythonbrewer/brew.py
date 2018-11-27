@@ -112,11 +112,13 @@ def generate_homebrew_formula(python_package_name, formula_name, description, ho
 
     logger.info("")
     logger.info("Downloading release package:")
-    if release_url is None:
+    if release_url:
+        package_name, url, sha256 = python_package_name, release_url, get_release_file_sha256(release_url)
+    elif len(deps) > 0:
         # fetch the details for our python package (should be the last dependency in the ordered dependency list)
         package_name, url, sha256 = calculate_dep_params(deps[-1], required_suffixes=required_suffixes)
     else:
-        package_name, url, sha256 = python_package_name, release_url, get_release_file_sha256(release_url)
+        raise ValueError("No release url found, please provide one")
 
     logger.info("")
 
