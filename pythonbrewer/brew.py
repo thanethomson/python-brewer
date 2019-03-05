@@ -41,7 +41,7 @@ HOMEBREW_FORMULA_TEMPLATE = """class {formula_name} < Formula
 end"""
 
 
-def calculate_dep_params(dep, required_suffixes=None):
+def calculate_dep_params(dep, index=None, required_suffixes=None):
     logger.info(
         " - Calculating SHA256 hash of dependency: %s, version: %s" % (
             dep['package_name'],
@@ -51,6 +51,7 @@ def calculate_dep_params(dep, required_suffixes=None):
     package_files = fetch_pypi_package_files(
         dep['package_name'],
         dep['installed_version'],
+        index=index,
         required_suffixes=required_suffixes or ["py2.py3-none-any.whl", ".tar.gz", ".zip"]
     )
     if len(package_files) == 0:
@@ -71,7 +72,7 @@ def get_release_file_sha256(url):
 
 
 def generate_homebrew_formula(python_package_name, formula_name, description, homepage, git_repo_url,
-                              release_url=None, required_suffixes=None):
+                              index=None, release_url=None, required_suffixes=None):
     """Attempts to generate a Homebrew formula template from the given information.
 
     Args:
@@ -80,6 +81,7 @@ def generate_homebrew_formula(python_package_name, formula_name, description, ho
         description: The full text description of the formula.
         homepage: The homepage URL for the package.
         git_repo_url: The Git repo URL for the package.
+        index: URL of a PyPI index to search for packages in.
         release_url: A custom release URL for the Python package, which will override getting the release
             from PyPI.
         required_suffixes: A precedence-ordered list of possible suffixes for the desired packages.
@@ -100,7 +102,7 @@ def generate_homebrew_formula(python_package_name, formula_name, description, ho
 
     dep_string = ""
     for dep in deps[:-1]:
-        package_name, url, sha256 = calculate_dep_params(dep, required_suffixes=required_suffixes)
+        package_name, url, sha256 = calculate_dep_params(dep, index=index, required_suffixes=required_suffixes)
         dep_string += ('\n\n  resource "{package_name}" do\n'
                        '    url "{url}"\n'
                        '    sha256 "{sha256}"\n'

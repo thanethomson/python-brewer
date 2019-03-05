@@ -27,6 +27,11 @@ def main():
         help="Where to write the formula template (Ruby file)"
     )
     parser.add_argument(
+        "-i", "--index",
+        default=None,
+        help="The PyPI index to use to find packages"
+    )
+    parser.add_argument(
         "-n", "--formula-name",
         default=None,
         help="The name of the Homebrew formula"
@@ -78,8 +83,8 @@ def main():
     output_file = os.path.abspath(args.output_file)
     with open(output_file, "wt", encoding="utf-8") as f:
         template = generate_homebrew_formula(args.package_name, formula_name, args.description,
-                                             args.homepage, args.git_repo, release_url=args.release_url,
-                                             required_suffixes=args.suffixes.split(","))
+                                             args.homepage, args.git_repo, index=args.index, 
+                                             release_url=args.release_url, required_suffixes=args.suffixes.split(","))
         f.write(template)
 
     logger.info("Wrote template to %s" % output_file)
