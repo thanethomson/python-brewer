@@ -7,6 +7,7 @@ import hashlib
 
 import requests
 import html5lib
+from urllib.parse import urljoin
 
 from pythonbrewer.errors import *
 
@@ -18,6 +19,7 @@ __all__ = [
     "get_pypi_sha256"
 ]
 
+PYPI_INDEX = "https://pypi.python.org/simple"
 
 def get_html_namespace(tree):
     p = re.compile(r"\{(?P<namespace>[^\}]+)\}.+")
@@ -29,7 +31,7 @@ def html_findall(tree, namespace, xpath):
     return tree.findall(xpath.format(ns="{%s}" % namespace))
 
 
-def fetch_pypi_package_files(package_name, package_version, required_suffixes=None):
+def fetch_pypi_package_files(package_name, package_version, required_suffixes=None, index=None):
     """Attempts to fetch a list of files for the given package/version from PyPI.
 
     Args:
@@ -38,11 +40,14 @@ def fetch_pypi_package_files(package_name, package_version, required_suffixes=No
         required_suffixes: The required suffixes for the package files we want. Leave as None if you want all files for
             the particular version. If supplied, it must be a list and must specify, in order of precedence,
             the suffixes.
+        index: URL of a PyPI index to search for packages in.
 
     Returns:
         A list of URLs to different distributions for the specified package.
     """
-    response = requests.get("https://pypi.python.org/simple/%s" % package_name)
+    if not index:
+        index = PYPI_INDEX
+    response = requests.get("{index}/{name}/".format(index=index, name=package_name))
     if response.status_code >= 300:
         raise PackageNotFoundError(package_name)
 
@@ -54,13 +59,13 @@ def fetch_pypi_package_files(package_name, package_version, required_suffixes=No
     # parse the incoming HTML
     tree = html5lib.parse(response.text)
     namespace = get_html_namespace(tree)
-    links = html_findall(tree, namespace, "./{ns}body/{ns}a")
+    links = html_findall(tree, namespace, "./{ns}body//{ns}a")
 
     urls_for_suffix = dict([(suffix, []) for suffix in required_suffixes])
     urls = []
     for link in links:
         filename = re.sub(r"\.[0]+(\d+)", r".\1", link.text.strip().lower())
-        url = link.attrib["href"]
+        url = urljoin(index, link.attrib["href"])
 
         if filename.startswith(expected_prefix) or filename.startswith(expected_prefix_underscore):
             if required_suffixes is not None:
